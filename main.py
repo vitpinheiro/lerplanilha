@@ -64,17 +64,16 @@ if uploaded_file is not None:
 
     # Botão para processar o arquivo
     if st.button('Processar arquivo'):
-        # Ler e filtrar o arquivo XLS se col_guia e data_range estiverem definidos
         if col_guia and date_range:
             column_names = ['Guia', 'Dt item']
             df_filtered = read_and_filter_xls(uploaded_file, column_names, col_guia, date_range[0], date_range[1])
 
-            # Exibir o DataFrame filtrado se existir
             if df_filtered is not None:
                 st.write(f'Tabela filtrada pelos valores:')
                 st.table(df_filtered)
+                
             if st.button('Exportar para Excel'):
                 # Salvar o DataFrame filtrado em um arquivo Excel
-                file_name = f'resultado_filtrado_{col_guia}.xlsx'  # Nome do arquivo de saída
+                file_name = f"resultado_filtrado_{col_guia}.xls"  # Nome do arquivo de saída
                 df_filtered.to_excel(file_name, index=False)
                 st.success(f'Arquivo salvo com sucesso: {file_name}')
