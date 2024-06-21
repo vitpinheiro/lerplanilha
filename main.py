@@ -27,18 +27,43 @@ column_names = ['Guia', 'Dt item']
 # Interface do Streamlit
 st.title('Leitura e Filtro de Arquivo XLS')
 
-# Text input para nome da coluna
-col_name = st.text_input('Digite o nome da coluna', 'Guia')
+# Text input para o valor da coluna "Guia"
+col_guia = st.text_input('Digite o valor para a coluna "Guia"')
+
+# Date input para o intervalo de datas da coluna "Dt item"
+date_range = st.date_input(
+    "Selecione o intervalo de datas para a coluna 'Dt item'",
+    value=(pd.to_datetime('2024-01-01').date(), pd.to_datetime('2024-12-31').date())
+)
 
 # Ler e filtrar o arquivo XLS
 df_filtered = read_and_filter_xls(xls_file, column_names)
 
 # Exibir o DataFrame filtrado se existir
 if df_filtered is not None:
-    st.write(f'Tabela filtrada pela coluna "{col_name}":')
+    st.write(f'Tabela filtrada pelos valores:')
     
-    # Verificar se o nome da coluna digitado está presente no DataFrame
-    if col_name in df_filtered.columns:
-        st.table(df_filtered[[col_name]])
+    # Verificar se as colunas "Guia" e "Dt item" estão presentes no DataFrame
+    guia_present = 'Guia' in df_filtered.columns
+    dt_item_present = 'Dt item' in df_filtered.columns
+
+    if guia_present and dt_item_present:
+        # Converter a coluna "Dt item" para datetime
+        df_filtered['Dt item'] = pd.to_datetime(df_filtered['Dt item'], errors='coerce').dt.date
+
+        # Converter as datas selecionadas para datetime.date
+        start_date = pd.to_datetime(date_range[0]).date()
+        end_date = pd.to_datetime(date_range[1]).date()
+        
+        # Filtrar o DataFrame pelos valores digitados e intervalo de datas
+        df_filtered = df_filtered[
+            (df_filtered['Guia'].astype(str).str.contains(col_guia)) & 
+            (df_filtered['Dt item'] >= start_date) & 
+            (df_filtered['Dt item'] <= end_date)
+        ]
+        st.table(df_filtered)
     else:
-        st.warning(f'Coluna "{col_name}" não encontrada no DataFrame.')
+        if not guia_present:
+            st.warning('Coluna "Guia" não encontrada no DataFrame.')
+        if not dt_item_present:
+            st.warning('Coluna "Dt item" não encontrada no DataFrame.')
