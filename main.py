@@ -17,7 +17,7 @@ def read_and_filter_xls(xls_file, column_names, col_guia, start_date, end_date):
 
         if guia_present and dt_item_present:
             # Converter a coluna "Dt item" para datetime
-            df_filtered['Dt item'] = pd.to_datetime(df_filtered['Dt item'], errors='coerce').dt.date
+            df_filtered.loc[:, 'Dt item'] = pd.to_datetime(df_filtered['Dt item'], errors='coerce').dt.date
 
             # Filtrar o DataFrame pelos valores digitados e intervalo de datas
             df_filtered = df_filtered[
@@ -72,8 +72,14 @@ if uploaded_file is not None:
                 st.write(f'Tabela filtrada pelos valores:')
                 st.table(df_filtered)
                 
-            if st.button('Exportar para Excel'):
-                # Salvar o DataFrame filtrado em um arquivo Excel
-                file_name = f"resultado_filtrado_{col_guia}.xls"  # Nome do arquivo de saída
-                df_filtered.to_excel(file_name, index=False)
-                st.success(f'Arquivo salvo com sucesso: {file_name}')
+                # Botão para exportar para Excel
+                output = BytesIO()
+                df_filtered.to_excel(output, index=False)
+                output.seek(0)
+
+                st.download_button(
+                    label="Baixar arquivo Excel",
+                    data=output,
+                    file_name=f"resultado_filtrado_{col_guia}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
