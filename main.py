@@ -1,22 +1,11 @@
 import pandas as pd
 import streamlit as st
-
-
-# HORIZONTAL_RED = "images/horizontal_red.png"
-# ICON_RED = "images/icon_red.png"
-# HORIZONTAL_BLUE = "images/horizontal_blue.png"
-# ICON_BLUE = "images/icon_blue.png"
-
-# options = [HORIZONTAL_RED, ICON_RED, HORIZONTAL_BLUE, ICON_BLUE]
-# sidebar_logo = st.selectbox("Sidebar logo", options, 0)
-# main_body_logo = st.selectbox("Main body logo", options, 1)
-
-# st.logo(sidebar_logo, icon_image=main_body_logo)
-# st.sidebar.markdown("Hi!")
-
+from io import BytesIO
+import openpyxl
+from datetime import datetime
 
 # Função para ler e filtrar o arquivo XLS
-def read_and_filter_xls(xls_file, column_names):
+def read_and_filter_xls(xls_file, column_names, col_guia=None, date_range=None):
     try:
         # Ler o arquivo XLS e criar DataFrame
         df = pd.read_excel(xls_file)
@@ -24,60 +13,73 @@ def read_and_filter_xls(xls_file, column_names):
         # Filtrar apenas as colunas especificadas
         df_filtered = df[column_names]
 
+        # Aplicar filtro por "Guia" se col_guia estiver definido
+        if col_guia:
+            df_filtered = df_filtered[df_filtered['Guia'].astype(str).str.contains(col_guia)]
+
+        # Aplicar filtro por "Dt item" se date_range estiver definido
+        if date_range:
+            start_date = pd.to_datetime(date_range[0]).date()
+            end_date = pd.to_datetime(date_range[1]).date()
+
+            # Converter a coluna "Dt item" para datetime.date
+            df_filtered['Dt item'] = pd.to_datetime(df_filtered['Dt item'], errors='coerce').dt.date
+
+            df_filtered = df_filtered[(df_filtered['Dt item'] >= start_date) & (df_filtered['Dt item'] <= end_date)]
+
         return df_filtered
     
     except FileNotFoundError:
         st.error(f"Arquivo não encontrado: {xls_file}")
+        return None
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
         return None
 
-# Caminho para o arquivo XLS
-xls_file = "Demonstrativo original 04-2024.xls"
-
-# Lista de colunas para exibir
-column_names = ['Guia', 'Dt item']
-
 # Interface do Streamlit
+st.image("LOGO.png", width=60)
 st.title('Leitura e Filtro de Arquivo XLS')
 
-# Text input para o valor da coluna "Guia"
-col_guia = st.text_input('Digite o valor para a coluna "Guia"')
+# Upload de arquivo
+uploaded_file = st.file_uploader("Escolha um arquivo XLS/XLSX")
 
-# Date input para o intervalo de datas da coluna "Dt item"
-date_range = st.date_input(
-    "Selecione o intervalo de datas para a coluna 'Dt item'",
-    value=(pd.to_datetime('2024-01-01').date(), pd.to_datetime('2024-12-31').date())
-)
+column_names = ['Guia', 'Dt item']
 
-# Ler e filtrar o arquivo XLS
-df_filtered = read_and_filter_xls(xls_file, column_names)
+# Se um arquivo for carregado
+if uploaded_file is not None:
+    # Checkbox e input para filtro de "Guia"
+    guia = st.checkbox("Filtro Guia", value=True)
+    if guia:
+        col_guia = st.text_input('Digite o valor para a coluna "Guia"')
 
-# Exibir o DataFrame filtrado se existir
-if df_filtered is not None:
-    st.write(f'Tabela filtrada pelos valores:')
-    
-    # Verificar se as colunas "Guia" e "Dt item" estão presentes no DataFrame
-    guia_present = 'Guia' in df_filtered.columns
-    dt_item_present = 'Dt item' in df_filtered.columns
+    # Checkbox e input para filtro de data
+    data = st.checkbox("Filtro Data", value=True)
+    if data:
+        date_range = st.date_input(
+            "Selecione o intervalo de datas para a coluna 'Dt item'",
+            value=(pd.to_datetime('2024-01-01').date(), pd.to_datetime('2024-12-31').date())
+        )
 
-    if guia_present and dt_item_present:
-        # Converter a coluna "Dt item" para datetime
-        df_filtered['Dt item'] = pd.to_datetime(df_filtered['Dt item'], errors='coerce').dt.date
-
-        # Converter as datas selecionadas para datetime.date
-        start_date = pd.to_datetime(date_range[0]).date()
-        end_date = pd.to_datetime(date_range[1]).date()
+    # Botão para aplicar filtros e exibir tabela filtrada
+    if st.button('Aplicar Filtros'):
+        df_filtered = read_and_filter_xls(uploaded_file, column_names, col_guia if guia else None, date_range if data else None)
         
-        # Filtrar o DataFrame pelos valores digitados e intervalo de datas
-        df_filtered = df_filtered[
-            (df_filtered['Guia'].astype(str).str.contains(col_guia)) & 
-            (df_filtered['Dt item'] >= start_date) & 
-            (df_filtered['Dt item'] <= end_date)
-        ]
-        st.table(df_filtered)
-    else:
-        if not guia_present:
-            st.warning('Coluna "Guia" não encontrada no DataFrame.')
-        if not dt_item_present:
-            st.warning('Coluna "Dt item" não encontrada no DataFrame.')
+        if df_filtered is not None:
+            st.write('Tabela filtrada pelos valores selecionados:')
+            st.table(df_filtered)
+
+            # Botão para exportar para Excel
+            output = BytesIO()
+            df_filtered.to_excel(output, index=False)
+            output.seek(0)
+
+            st.download_button(
+                label="Baixar arquivo Excel",
+                data=output,
+                file_name=f"resultado_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+    # Exibir o nome do arquivo e detalhes básicos
+    st.write(f'Nome do arquivo: {uploaded_file.name}')
+    st.write(f'Tamanho do arquivo: {uploaded_file.size} bytes')
