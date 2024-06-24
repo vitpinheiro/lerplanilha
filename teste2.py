@@ -69,20 +69,31 @@ if uploaded_file is not None:
             st.table(df_filtered)
 
 
-      
+        uploaded_file2 = st.file_uploader("Escolha o arquivo ATENDIMENTOS.xls")
+         
+        # colunas_guia = ['5681512', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']
+
+        # df_filtered_guia = df[df.isin(colunas_guia).any(axis=1)]
+
+        # df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 1 ]
+        # df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_CONTA'] == df_filtered_guia['GIH_NUMERO']]
+        # # Mostra as colunas filtradas de interesse
+        # df_filtered = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']]
 
 
-            # Botão para exportar para Excel
-            output = BytesIO()
-            df_filtered.to_excel(output, index=False)
-            output.seek(0)
 
-            st.download_button(
-                label="Baixar arquivo Excel",
-                data=output,
-                file_name=f"resultado_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+   
+            # # Botão para exportar para Excel
+            # output = BytesIO()
+            # df_filtered.to_excel(output, index=False)
+            # output.seek(0)
+
+            # st.download_button(
+            #     label="Baixar arquivo Excel",
+            #     data=output,
+            #     file_name=f"resultado_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+            #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            # )
 
     # Exibir o nome do arquivo e detalhes básicos
     st.write(f'Nome do arquivo: {uploaded_file.name}')
