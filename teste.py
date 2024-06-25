@@ -1,3 +1,5 @@
+# esse teste está lendo a planilha ATENDIMENTOS.xls de acordo com alguns filtros
+
 import pandas as pd
 
 # Lê o arquivo Excel em um DataFrame

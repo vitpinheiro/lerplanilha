@@ -1,7 +1,16 @@
+# junção de main.py e teste.py, aqui está a leitura e filtragem de demonstrativo primeiro(planilha fixa), logo após a leitura da planilha ATENDIMENTOS(terá conexão com o banco), onde compara se a guia filtrada inicilamente, será incluida na filtragem da outra, para ver se elas são iguais, mostrando uma outra tabela. Ambas podem ser baixadas para csv e xlsx
+# fiz a conexao com um banco(teste apenas), no conexaobanco.py, estou importando aqui as funcoes de conexao
+
 import pandas as pd
 import streamlit as st
 from io import BytesIO
 from datetime import datetime
+from conexaobanco import connect_to_database
+from conexaobanco import execute_sql_query
+
+# query = f"SELECT guia FROM guia"
+# guia_from_database = execute_sql_query(query)
+
 
 # Função para ler e filtrar o arquivo XLS
 def read_and_filter_xls(xls_file, column_names, col_guia=None, date_range=None):
