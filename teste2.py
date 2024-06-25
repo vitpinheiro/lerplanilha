@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 from io import BytesIO
-import openpyxl
 from datetime import datetime
 
 # Função para ler e filtrar o arquivo XLS
@@ -13,16 +12,15 @@ def read_and_filter_xls(xls_file, column_names, col_guia=None, date_range=None):
         # Filtrar apenas as colunas especificadas
         df_filtered = df[column_names]
 
-        # Aplicar filtro por "Guia" se col_guia estiver definido
+       
         if col_guia:
             df_filtered = df_filtered[df_filtered['Guia'].astype(str).str.contains(col_guia)]
 
-        # Aplicar filtro por "Dt item" se date_range estiver definido
         if date_range:
             start_date = pd.to_datetime(date_range[0]).date()
             end_date = pd.to_datetime(date_range[1]).date()
 
-            # Converter a coluna "Dt item" para datetime.date
+          
             df_filtered['Dt item'] = pd.to_datetime(df_filtered['Dt item'], errors='coerce').dt.date
 
             df_filtered = df_filtered[(df_filtered['Dt item'] >= start_date) & (df_filtered['Dt item'] <= end_date)]
@@ -44,15 +42,16 @@ st.title('Leitura e Filtro de Arquivo XLS')
 uploaded_file = st.file_uploader("Escolha um arquivo XLS/XLSX")
 
 column_names = ['Guia', 'Dt item']
+col_guia = None
 
-# Se um arquivo for carregado
+
 if uploaded_file is not None:
-    # Checkbox e input para filtro de "Guia"
+    
     guia = st.checkbox("Filtro Guia", value=True)
     if guia:
         col_guia = st.text_input('Digite o valor para a coluna "Guia"')
 
-    # Checkbox e input para filtro de data
+   
     data = st.checkbox("Filtro Data", value=True)
     if data:
         date_range = st.date_input(
@@ -60,41 +59,67 @@ if uploaded_file is not None:
             value=(pd.to_datetime('2024-01-01').date(), pd.to_datetime('2024-12-31').date())
         )
 
-    # Botão para aplicar filtros e exibir tabela filtrada
+ 
     if st.button('Aplicar Filtros'):
         df_filtered = read_and_filter_xls(uploaded_file, column_names, col_guia if guia else None, date_range if data else None)
         
         if df_filtered is not None:
             st.write('Tabela filtrada pelos valores selecionados:')
-            st.table(df_filtered)
+            st.dataframe(df_filtered)
+            
+            # Botão para exportar para Excel
+            output = BytesIO()
+            df_filtered.to_excel(output, index=False)
+            output.seek(0)
+
+            st.download_button(
+                label="Baixar arquivo Excel",
+                data=output,
+                file_name=f"resultado_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 
-        uploaded_file2 = st.file_uploader("Escolha o arquivo ATENDIMENTOS.xls")
-         
-        # colunas_guia = ['5681512', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']
-
-        # df_filtered_guia = df[df.isin(colunas_guia).any(axis=1)]
-
-        # df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 1 ]
-        # df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_CONTA'] == df_filtered_guia['GIH_NUMERO']]
-        # # Mostra as colunas filtradas de interesse
-        # df_filtered = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']]
-
-
-
-   
-            # # Botão para exportar para Excel
-            # output = BytesIO()
-            # df_filtered.to_excel(output, index=False)
-            # output.seek(0)
-
-            # st.download_button(
-            #     label="Baixar arquivo Excel",
-            #     data=output,
-            #     file_name=f"resultado_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-            #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            # )
-
-    # Exibir o nome do arquivo e detalhes básicos
     st.write(f'Nome do arquivo: {uploaded_file.name}')
     st.write(f'Tamanho do arquivo: {uploaded_file.size} bytes')
+else:
+    st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
+
+# Carregar a planilha ATENDIMENTOS.xls
+uploaded_file2 = st.file_uploader("Escolha o arquivo ATENDIMENTOS.xls", key="atendimentos")
+
+if uploaded_file2 is not None:
+    if col_guia is not None:
+ 
+        df = pd.read_excel(uploaded_file2)
+
+    
+        colunas_guia = [col_guia, 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']
+
+      
+        df_filtered_guia = df[df.isin(colunas_guia).any(axis=1)]
+
+    
+        df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 1]
+        df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_CONTA'] == df_filtered_guia['GIH_NUMERO']]
+
+
+        df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']]
+
+  
+        st.dataframe(df_filtered2)
+     
+        output2 = BytesIO()
+        df_filtered2.to_excel(output2, index=False)
+        output2.seek(0)
+
+        st.download_button(
+        label="Baixar arquivo Excel",
+        data=output2,
+        file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        st.write("Por favor, insira um valor para a coluna 'Guia' no filtro acima.")
+else:
+    st.write("Por favor, faça o upload do arquivo ATENDIMENTOS.xls.")
