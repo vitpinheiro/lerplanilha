@@ -1,11 +1,10 @@
-# esse teste está lendo a planilha ATENDIMENTOS.xls de acordo com alguns filtros
-
+# TESTE INTERNAÇÃO
 import pandas as pd
 
 # Lê o arquivo Excel em um DataFrame
-df = pd.read_excel("ATENDIMENTOS.xls")
+df = pd.read_excel("atendimentos v3.xls")
 
-colunas_guia = ['5681512', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']
+colunas_guia = [7797731, 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']
 
 df_filtered_guia = df[df.isin(colunas_guia).any(axis=1)]
 
