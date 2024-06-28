@@ -7,7 +7,7 @@ import pandas as pd
 df = pd.read_excel("atendimentos v3.xls")
 
 
-colunas_guia = [8698702, 'GUIA_ATENDIMENTO', 'GIH_NUMERO', 'FAT_NUM']
+colunas_guia = [8698702, 6063290, 'GUIA_ATENDIMENTO', 'GIH_NUMERO', 'FAT_NUM']
 
 df_filtered_guia = df[df.isin(colunas_guia).any(axis=1)]
 

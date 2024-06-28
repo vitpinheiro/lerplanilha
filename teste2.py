@@ -78,7 +78,7 @@ def main_page():
         if guide_values:
             df = pd.read_excel(uploaded_file2)
             colunas_guia = ['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']
-            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values) | df['GIH_NUMERO'].isin(guide_values)]
+            df_filtered_guia = df[df.isin(colunas_guia).any(axis=1)]
             df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 1]
             df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
             df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']]
