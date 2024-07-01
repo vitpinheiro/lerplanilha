@@ -27,8 +27,7 @@ def read_and_filter_xls(xls_file, column_names, guide_values=None, date_range=No
         return None
 
 def main_page():
-    st.image("LOGO.png", width=150)
-    st.write("INTERNAÇÃO")
+    st.image("LOGO.png", width=60)
     st.header('Leitura e Filtro de Arquivo XLS')
 
     uploaded_file = st.file_uploader("Escolha um arquivo XLS/XLSX")
@@ -61,12 +60,6 @@ def main_page():
                 output = BytesIO()
                 df_filtered.to_excel(output, index=False)
                 output.seek(0)
-                st.download_button(
-                    label="Baixar arquivo Excel",
-                    data=output,
-                    file_name=f"resultado_demonstrativo_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
 
         st.write(f'Nome do arquivo: {uploaded_file.name}')
         st.write(f'Tamanho do arquivo: {uploaded_file.size} bytes')
@@ -112,8 +105,7 @@ def main_page():
 
 
 def page_tratamento():
-    st.image("LOGO.png", width=150)
-    st.write("TRATAMENTO")
+    st.image("LOGO.png", width=60)
     st.header('Leitura e Filtro de Arquivo XLS')
 
     uploaded_file = st.file_uploader("Escolha um arquivo XLS/XLSX")
@@ -145,12 +137,6 @@ def page_tratamento():
                 output = BytesIO()
                 df_filtered.to_excel(output, index=False)
                 output.seek(0)
-                st.download_button(
-                    label="Baixar arquivo Excel",
-                    data=output,
-                    file_name=f"resultado_ATENDIMENTO_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
 
         st.write(f'Nome do arquivo: {uploaded_file.name}')
         st.write(f'Tamanho do arquivo: {uploaded_file.size} bytes')
