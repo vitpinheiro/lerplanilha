@@ -3,6 +3,7 @@ import streamlit as st
 from io import BytesIO
 from datetime import datetime
 
+
 # Função para ler e filtrar o arquivo XLS
 def read_and_filter_xls(xls_file, column_names, guide_values=None, date_range=None):
     try:
@@ -58,6 +59,15 @@ def main_page():
             if df_filtered is not None:
                 st.write('Tabela filtrada pelos valores selecionados:')
                 st.dataframe(df_filtered)
+                # min_date = df_filtered['Dt item'].min()
+                # max_date = df_filtered['Dt item'].max()
+                # st.write(f"A menor data encontrada é: {min_date}")
+                # st.write(f"A menor data encontrada é: {max_date}")
+
+                # Aplicar um novo filtro baseado na menor data encontrada
+                # df_filtered = df_filtered[df_filtered['Dt item']]
+                # st.write('Tabela filtrada pela menor data:')
+                # st.dataframe(df_filtered)
                 output = BytesIO()
                 df_filtered.to_excel(output, index=False)
                 output.seek(0)
@@ -67,6 +77,8 @@ def main_page():
                     file_name=f"resultado_demonstrativo_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+
+                # Agora, você pode continuar com o processamento usando df_filtered
 
         st.write(f'Nome do arquivo: {uploaded_file.name}')
         st.write(f'Tamanho do arquivo: {uploaded_file.size} bytes')
@@ -82,34 +94,50 @@ def main_page():
         df = pd.read_excel(uploaded_file2)
 
         # Remover pontos dos valores nas colunas relevantes
-        df['GUIA_ATENDIMENTO'] = df['GUIA_ATENDIMENTO'].apply(lambda x: str(x).replace('.', ''))
-        df['GUIA_CONTA'] = df['GUIA_CONTA'].apply(lambda x: str(x).replace('.', ''))
-        df['GIH_NUMERO'] = df['GIH_NUMERO'].apply(lambda x: str(x).replace('.', ''))
-        guide_values = [str(value).replace('.', '') for value in guide_values]
+        df['GUIA_ATENDIMENTO'] = df['GUIA_ATENDIMENTO'].astype(str).str.replace('.', '')
+        df['GUIA_CONTA'] = df['GUIA_CONTA'].astype(str).str.replace('.', '')
+        df['GIH_NUMERO'] = df['GIH_NUMERO'].astype(str).str.replace('.', '')
 
-        # Aplicar filtros conforme os valores das guias e data
         if guide_values:
-            df_filtered_guia = df[(df['GUIA_ATENDIMENTO'].isin(guide_values)) | (df['GUIA_CONTA'].isin(guide_values)) | (df['GIH_NUMERO'].isin(guide_values))]
+            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values) | df['GIH_NUMERO'].isin(guide_values)]
         else:
             df_filtered_guia = df.copy()
 
-        df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 1]
-        df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-        df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']]
+        if 'df_filtered' in locals():
+            min_date = df_filtered['Dt item']
+            
+            
+            df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI']).dt.date
+            df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN']).dt.date
 
-        st.dataframe(df_filtered2)
-        output2 = BytesIO()
-        df_filtered2.to_excel(output2, index=False)
-        output2.seek(0)
-        st.download_button(
-            label="Baixar arquivo Excel",
-            data=output2,
-            file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            
+            df_filtered_guia = df_filtered_guia[
+                (df_filtered_guia['CTH_DTHR_INI'] <= min_date) & (min_date <= df_filtered_guia['CTH_DTHR_FIN'])
+            ]
+           
+            
+            df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
+
+            
+            df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO','CTH_DTHR_INI','CTH_DTHR_FIN']]
+            df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
+            st.dataframe(df_filtered2)
+
+            # Criar botão de download para o arquivo Excel filtrado
+            output2 = BytesIO()
+            df_filtered2.to_excel(output2, index=False)
+            output2.seek(0)
+            st.download_button(
+                label="Baixar arquivo Excel",
+                data=output2,
+                file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
+
     else:
         st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v3.xls.")
-
 
 def page_tratamento():
     st.image("LOGO.png", width=150)
@@ -176,7 +204,8 @@ def page_tratamento():
         df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
         df_filtered_guia = df_filtered_guia[pd.notna(df_filtered_guia['FAT_NUM'])]
         df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-        df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO']]
+        df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
+        df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
 
         st.dataframe(df_filtered2)
         output2 = BytesIO()
