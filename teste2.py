@@ -14,6 +14,11 @@ def read_and_filter_xls(file, column_names, guide_values, date_range):
     return df
 
 def main_page():
+    import pandas as pd
+    import streamlit as st
+    from datetime import datetime
+    from io import BytesIO
+
     st.image("LOGO.png", width=150)
     st.write("INTERNAÇÃO")
     st.header('Leitura e Filtro de Arquivo XLS')
@@ -42,14 +47,14 @@ def main_page():
 
             df_filtered = read_and_filter_xls(uploaded_file, column_names, guide_values_to_use, date_range_to_use)
             if df_filtered is not None:
-                st.write('Tabela filtrada pelos valores selecionados:')
-                st.dataframe(df_filtered[['Guia', 'Dt item']])
+             
+                
 
                 min_date = df_filtered['Dt item'].min()
-                st.write(f"A menor data encontrada é: {min_date}")
+                # st.write(f"A menor data encontrada é: {min_date}")
 
                 df_filtered_by_min_date = df_filtered[df_filtered['Dt item'] == min_date][['Guia', 'Dt item']]
-                st.write('Tabela filtrada pela menor data:')
+                st.write('Tabela filtrada pelos valores selecionados:')
                 st.dataframe(df_filtered_by_min_date)
 
                 output = BytesIO()
@@ -62,7 +67,6 @@ def main_page():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
-      
     else:
         st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
 
@@ -77,6 +81,7 @@ def main_page():
         df['GUIA_CONTA'] = df['GUIA_CONTA'].astype(str).str.replace('.', '')
         df['GIH_NUMERO'] = df['GIH_NUMERO'].astype(str).str.replace('.', '')
 
+        # Verifica se o df_filtered foi previamente filtrado e não está vazio
         if 'df_filtered' in locals() and not df_filtered.empty:
             min_date = df_filtered['Dt item'].min()
 
@@ -117,14 +122,14 @@ def main_page():
             st.download_button(
                 label="Baixar arquivo Excel",
                 data=output2,
-                file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                file_name=f"resultado_ATENDIMENTO_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
             st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
-    else:
-        st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v3.xls.")
 
+    else:
+        st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v4.xls.")
 
 def page_tratamento():
     st.image("LOGO.png", width=150)
@@ -195,12 +200,25 @@ def page_tratamento():
 
         df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
         df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-        df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
+        df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
         df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
+        df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
+        df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
 
-        st.dataframe(df_filtered2)
+        st.dataframe(df_filtered2.rename(columns={
+                'GUIA_ATENDIMENTO': 'Guia',
+                'HSP_NUM': 'IH',
+                'HSP_PAC': 'Registro',
+                'CTH_NUM': 'Conta',
+                'FAT_SERIE': 'Pre. S',
+                'FAT_NUM': 'Pre. Num',
+                'NFS_SERIE': 'Fat. S',
+                'NFS_NUMERO': 'Fat. Num',
+            }))
         output2 = BytesIO()
-        df_filtered2.to_excel(output2, index=False)                   
+        df_filtered2.to_excel(output2, index=False, header=[
+                'Guia', 'IH', 'Registro', 'Conta', 'Pre. S', 'Pre. Num', 'Fat. S', 'Fat. Num'
+        ])  # Usar header para definir os nomes das colunas no arquivo Excel                  
         output2.seek(0)
         st.download_button(
             label="Baixar arquivo Excel",
