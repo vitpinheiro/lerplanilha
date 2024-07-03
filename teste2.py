@@ -77,34 +77,42 @@ def main_page():
         df['GUIA_CONTA'] = df['GUIA_CONTA'].astype(str).str.replace('.', '')
         df['GIH_NUMERO'] = df['GIH_NUMERO'].astype(str).str.replace('.', '')
 
-        if guide_values:
-            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values) | df['GIH_NUMERO'].isin(guide_values)]
-        else:
-            df_filtered_guia = df.copy()
-
         if 'df_filtered' in locals() and not df_filtered.empty:
             min_date = df_filtered['Dt item'].min()
 
-            df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
-            df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
+            df['CTH_DTHR_INI'] = pd.to_datetime(df['CTH_DTHR_INI'], errors='coerce')
+            df['CTH_DTHR_FIN'] = pd.to_datetime(df['CTH_DTHR_FIN'], errors='coerce')
 
             min_date_timestamp = min_date.timestamp()
 
-            df_filtered_guia = df_filtered_guia[
-                (df_filtered_guia['CTH_DTHR_INI'].apply(lambda x: x.timestamp() if pd.notnull(x) else None) <= min_date_timestamp) & 
-                (min_date_timestamp <= df_filtered_guia['CTH_DTHR_FIN'].apply(lambda x: x.timestamp() if pd.notnull(x) else None))
+            df = df[
+                (df['CTH_DTHR_INI'].apply(lambda x: x.timestamp() if pd.notnull(x) else None) <= min_date_timestamp) & 
+                (min_date_timestamp <= df['CTH_DTHR_FIN'].apply(lambda x: x.timestamp() if pd.notnull(x) else None))
             ]
            
-            df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
+            df = df[df['GUIA_ATENDIMENTO'] == df['GIH_NUMERO']]
 
-            df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
+            df_filtered2 = df[['GUIA_ATENDIMENTO','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
             df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
             df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
             df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
-            st.dataframe(df_filtered2)
-
+           
+            st.dataframe(df_filtered2.rename(columns={
+                'GUIA_ATENDIMENTO': 'Guia',
+                'HSP_NUM': 'IH',
+                'HSP_PAC': 'Registro',
+                'CTH_NUM': 'Conta',
+                'FAT_SERIE': 'Pre. S',
+                'FAT_NUM': 'Pre. Num',
+                'NFS_SERIE': 'Fat. S',
+                'NFS_NUMERO': 'Fat. Num',
+                'CTH_DTHR_INI': 'DT INI',
+                'CTH_DTHR_FIN': 'DT FIM'
+            }))
             output2 = BytesIO()
-            df_filtered2.to_excel(output2, index=False)
+            df_filtered2.to_excel(output2, index=False, header=[
+                'Guia', 'IH', 'Registro', 'Conta', 'Pre. S', 'Pre. Num', 'Fat. S', 'Fat. Num', 'DT INI', 'DT FIM'
+            ])  # Usar header para definir os nomes das colunas no arquivo Excel
             output2.seek(0)
             st.download_button(
                 label="Baixar arquivo Excel",
@@ -116,6 +124,7 @@ def main_page():
             st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
     else:
         st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v3.xls.")
+
 
 def page_tratamento():
     st.image("LOGO.png", width=150)
@@ -148,13 +157,7 @@ def page_tratamento():
             if df_filtered is not None:
                 st.write('Tabela filtrada pelos valores selecionados:')
                 st.dataframe(df_filtered[['Guia', 'Dt item']])
-                
-                min_date = df_filtered['Dt item'].min()
-                st.write(f"A menor data encontrada é: {min_date}")
-
-                df_filtered_by_min_date = df_filtered[df_filtered['Dt item'] == min_date][['Guia', 'Dt item']]
-                st.write('Tabela filtrada pela menor data:')
-                st.dataframe(df_filtered_by_min_date)
+            
 
                 output = BytesIO()
                 df_filtered.to_excel(output, index=False)
@@ -187,19 +190,10 @@ def page_tratamento():
         else:
             df_filtered_guia = df.copy()
 
-        # Encontrar a menor "Guia" (ou "GUIA_ATENDIMENTO")
-        min_guia = df_filtered_guia['GUIA_ATENDIMENTO'].min()
+       
 
-        # Converter datas em timestamp e filtrar pelo intervalo
-        min_guia_timestamp = pd.to_datetime(min_guia, format='%d/%m/%Y').timestamp()
-        df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
-        df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
 
-        df_filtered_guia = df_filtered_guia[
-            (df_filtered_guia['CTH_DTHR_INI'].apply(lambda x: x.timestamp() if pd.notnull(x) else None) <= min_guia_timestamp) & 
-            (min_guia_timestamp <= df_filtered_guia['CTH_DTHR_FIN'].apply(lambda x: x.timestamp() if pd.notnull(x) else None))
-        ]
-
+        df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
         df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
         df_filtered2 = df_filtered_guia[['HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
         df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
