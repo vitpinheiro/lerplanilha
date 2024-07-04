@@ -14,7 +14,7 @@ def read_and_filter_xls(file, column_names, guide_values, date_range):
     return df
 
 def main_page():
-    st.image("LOGO.png", width=150)
+    st.image("LOGO.png", width=50)
     st.header('Filtragem de dados sobre Internação')
 
     uploaded_file = st.file_uploader("Escolha o arquivo 'Demonstrativo' em formato xls")
@@ -50,6 +50,7 @@ def main_page():
                 df_filtered_by_min_date = df_filtered[df_filtered['Dt item'] == min_date][['Guia', 'Dt item']]
                 st.write('Tabela filtrada pela menor data:')
                 st.dataframe(df_filtered_by_min_date)
+
       
     else:
         st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
@@ -76,45 +77,39 @@ def main_page():
             df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
             df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
 
-            st.write(f"Datas filtradas - INI: {df_filtered_guia['CTH_DTHR_INI'].min()} até {df_filtered_guia['CTH_DTHR_INI'].max()}")
+            min_date_timestamp = min_date.timestamp()
 
-
-            min_date_timestamp = pd.Timestamp(min_date)
-
-            df_filtered_guia = df_filtered_guia.loc[
-                (df_filtered_guia['CTH_DTHR_INI'] <= min_date_timestamp) & 
-                (min_date_timestamp <= df_filtered_guia['CTH_DTHR_FIN'])
+            df_filtered_guia = df_filtered_guia[
+                (df_filtered_guia['CTH_DTHR_INI'].apply(lambda x: x.timestamp() if pd.notnull(x) else None) <= min_date_timestamp) & 
+                (min_date_timestamp <= df_filtered_guia['CTH_DTHR_FIN'].apply(lambda x: x.timestamp() if pd.notnull(x) else None))
             ]
-
-            if df_filtered_guia.empty:
-                st.write("Nenhum dado encontrado para o intervalo de datas fornecido.")
-            else:
-                df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
            
-                df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
-                df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
-                df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
-                df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
-                df_filtered2 = df_filtered2.rename(columns={'GUIA_ATENDIMENTO':'GUIA', 'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
-                st.dataframe(df_filtered2)
+            df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
 
-                output2 = BytesIO()
-                df_filtered2.to_excel(output2, index=False)
-                output2.seek(0)
-                st.download_button(
-                    label="Baixar arquivo Excel",
-                    data=output2,
-                    file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
+            df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
+            df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
+            df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
+            df_filtered2 = df_filtered2.rename(columns={'GUIA_ATENDIMENTO':'GUIA', 'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
+            st.dataframe(df_filtered2)
+
+            output2 = BytesIO()
+            df_filtered2.to_excel(output2, index=False)
+            output2.seek(0)
+            st.download_button(
+                label="Baixar arquivo Excel",
+                data=output2,
+                file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         else:
             st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
     else:
-        st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v3.xls.")
+        st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
 
 def page_tratamento():
-    st.image("LOGO.png", width=150)
-    st.header('Filtragem de dados sobre Tratamento')
+    st.image("LOGO.png", width=50)
+    st.header('Filtragem de dados sobre Internação')
 
     uploaded_file = st.file_uploader("Escolha o arquivo 'Demonstrativo' em formato xls")
 
