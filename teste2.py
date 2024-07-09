@@ -63,6 +63,12 @@ def main_page():
 
     if uploaded_file2 is not None:
         df = pd.read_excel(uploaded_file2)
+        df['Índice Original'] = df.index
+        df_filtered_guia = df[
+                df['GUIA_ATENDIMENTO'].isin(df.index) |
+                df['GUIA_CONTA'].isin(df.index) |
+                df['GIH_NUMERO'].isin(df.index)
+            ]
 
         df['GUIA_ATENDIMENTO'] = df['GUIA_ATENDIMENTO'].astype(str).str.replace('.', '')
         df['GUIA_CONTA'] = df['GUIA_CONTA'].astype(str).str.replace('.', '')
@@ -74,9 +80,10 @@ def main_page():
             df_filtered_guia = df.copy()
 
         if 'df_filtered'in locals() and not df_filtered.empty:
+            
             min_date = df_filtered['Dt item'].min()
             min_date2 = pd.to_datetime(min_date, format="%Y-%m-%d %H:%M:%S")
-     
+        
 
             df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
             df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
@@ -93,13 +100,14 @@ def main_page():
                     (min_date2 <= df_filtered_guia['CTH_DTHR_FIN'])
                 ]
 
-
+            
             df_filtered2 = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-            df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'GIH_NUMERO', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
+            df_filtered2 = df_filtered2[[ 'Índice Original','GUIA_ATENDIMENTO','GUIA_CONTA', 'GIH_NUMERO', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
             df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
             df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
             df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
             df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
+       
             st.dataframe(df_filtered2)
 
             output2 = BytesIO()
