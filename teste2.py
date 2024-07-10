@@ -120,7 +120,8 @@ def main_page():
                 file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-      
+        else:
+            st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
     else:
         st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
 
