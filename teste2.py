@@ -110,6 +110,14 @@ def main_page():
             df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
        
             st.dataframe(df_filtered2)
+            
+            # Merge para encontrar apenas as linhas em comum com 'GUIA_ATENDIMENTO'
+            result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
+            
+            
+            result.drop_duplicates(subset=['Guia'], keep='first', inplace=True)
+
+            st.dataframe(result)
 
             output2 = BytesIO()
             df_filtered2.to_excel(output2, index=False)
