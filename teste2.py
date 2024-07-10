@@ -75,7 +75,8 @@ def main_page():
         df['GIH_NUMERO'] = df['GIH_NUMERO'].astype(str).str.replace('.', '')
 
         if guide_values:
-            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values) | df['GIH_NUMERO'].isin(guide_values)]
+            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values)]
+
         else:
             df_filtered_guia = df.copy()
 
@@ -102,7 +103,7 @@ def main_page():
 
             
             df_filtered2 = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-            df_filtered2 = df_filtered2[[ 'Índice Original','GUIA_ATENDIMENTO','GUIA_CONTA', 'GIH_NUMERO', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
+            df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
             df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
             df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
             df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
@@ -119,8 +120,7 @@ def main_page():
                 file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-        else:
-            st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
+      
     else:
         st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
 
