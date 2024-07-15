@@ -1,16 +1,37 @@
-import pandas as pd
-import datetime as dt
+import customtkinter as ctk
+from tkinter import filedialog
 
-df_1 = pd.read_excel("Demonstrativo original 04-2024.xls")
+# Função para abrir o diálogo de seleção de arquivos
+def open_file():
+    # Abrir o diálogo de seleção de arquivos
+    file_path = filedialog.askopenfilename(
+        title="Selecione um arquivo",
+        filetypes=(("Arquivos de Texto", "*.txt"), ("Todos os Arquivos", "*.*"))
+    )
+    
+    # Atualizar o texto do label com o caminho do arquivo selecionado
+    if file_path:
+        file_label.configure(text=f"Arquivo Selecionado: {file_path}")
 
-for data in df_1["Dt item"]:
-    data_formatada = dt.datetime.strptime(data, '%d/%m/%Y')
-    pass
+# Função principal para criar a aplicação
+def main():
+    # Criar a janela principal
+    root = ctk.CTk()  # Usa CTk para criar a janela
 
-df_2 = pd.read_excel("atendimentos v3.xls")
+    # Configurar o tamanho da janela
+    root.geometry("800x600")  # Tamanho da janela: largura x altura
 
-for data in df_2["CTH_DTHR_INI", ]:
-    data = data.split(" ")
-    data_sem_hora = data[0]
-    data_formatada = dt.datetime.strptime(data_sem_hora, '%Y-%m-%d')
-    pass
+    # Criar um botão para abrir o diálogo de seleção de arquivos
+    open_button = ctk.CTkButton(root, text="Abrir Arquivo", command=open_file)
+    open_button.place(x=10, y=10)  # Posicionar o botão
+
+    # Criar um label para mostrar o caminho do arquivo selecionado
+    global file_label
+    file_label = ctk.CTkLabel(root, text="Nenhum arquivo selecionado")
+    file_label.place(x=10, y=50)  # Posicionar o label
+
+    # Iniciar o loop principal da aplicação
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()

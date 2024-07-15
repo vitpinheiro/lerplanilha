@@ -3,6 +3,19 @@ import streamlit as st
 from io import BytesIO
 from datetime import datetime
 
+primary_color = "#1f77b4"
+st.markdown(
+    f"""
+    <style>
+    .primary-color {{
+        background-color: {primary_color};
+        color: white;
+        border-radius: 4px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 def read_and_filter_xls(file, column_names, guide_values, date_range):
     df = pd.read_excel(file)
@@ -14,10 +27,12 @@ def read_and_filter_xls(file, column_names, guide_values, date_range):
     return df
 
 def main_page():
-    st.image("LOGO.png", width=50)
+    st.image("LOGO.png", width=150)
     st.header('Filtragem de dados sobre Internação')
 
     uploaded_file = st.file_uploader("Escolha o arquivo 'Demonstrativo' em formato xls")
+
+    # st.markdown('<p class="primary-color">Este é um exemplo de texto com a cor primária.</p>', unsafe_allow_html=True)
 
     column_names = ['Guia', 'Dt item']
     guide_values = []
@@ -41,16 +56,22 @@ def main_page():
 
             df_filtered = read_and_filter_xls(uploaded_file, column_names, guide_values_to_use, date_range_to_use)
             if df_filtered is not None:
-                st.write('Tabela filtrada pelos valores selecionados:')
-                st.dataframe(df_filtered[['Guia', 'Dt item']])
+             
+                if df_filtered.empty:
+                    st.markdown("<h3 style='color: red;'>Linha não encontrada</h3>", unsafe_allow_html=True)
+                else:
+                    st.write('Tabela filtrada pelos valores selecionados:')
+                    st.dataframe(df_filtered[['Guia', 'Dt item']])
+               
 
-                min_date = df_filtered['Dt item'].min()
-                st.write(f"A menor data encontrada é: {min_date}")
+                    min_date = df_filtered['Dt item'].min()
+                    min_date2 = pd.to_datetime(min_date, format= "%Y-%m-%d %H:%M:%S")
+                    
+                    st.write(f"A menor data encontrada é: {min_date2}")
 
-                df_filtered_by_min_date = df_filtered[df_filtered['Dt item'] == min_date][['Guia', 'Dt item']]
-                st.write('Tabela filtrada pela menor data:')
-                st.dataframe(df_filtered_by_min_date)
-
+                    df_filtered_by_min_date = df_filtered[df_filtered['Dt item'] == min_date][['Guia', 'Dt item']]
+                # st.write('Tabela filtrada pela menor data:')
+                # st.dataframe(df_filtered_by_min_date)
       
     else:
         st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
@@ -61,37 +82,61 @@ def main_page():
 
     if uploaded_file2 is not None:
         df = pd.read_excel(uploaded_file2)
+        df['Índice Original'] = df.index
+        df_filtered_guia = df[
+                df['GUIA_ATENDIMENTO'].isin(df.index) |
+                df['GUIA_CONTA'].isin(df.index) |
+                df['GIH_NUMERO'].isin(df.index)
+            ]
 
         df['GUIA_ATENDIMENTO'] = df['GUIA_ATENDIMENTO'].astype(str).str.replace('.', '')
         df['GUIA_CONTA'] = df['GUIA_CONTA'].astype(str).str.replace('.', '')
         df['GIH_NUMERO'] = df['GIH_NUMERO'].astype(str).str.replace('.', '')
 
         if guide_values:
-            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values) | df['GIH_NUMERO'].isin(guide_values)]
+            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values)]
+
         else:
             df_filtered_guia = df.copy()
 
-        if 'df_filtered' in locals() and not df_filtered.empty:
+        if 'df_filtered'in locals() and not df_filtered.empty:
+            
             min_date = df_filtered['Dt item'].min()
+            min_date2 = pd.to_datetime(min_date, format="%Y-%m-%d %H:%M:%S")
+        
 
             df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
             df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
 
-            min_date_timestamp = min_date.timestamp()
+            # st.write(df_filtered_guia['CTH_DTHR_INI'])
+            # st.write(df_filtered_guia['CTH_DTHR_FIN'])
 
-            df_filtered_guia = df_filtered_guia[
-                (df_filtered_guia['CTH_DTHR_INI'].apply(lambda x: x.timestamp() if pd.notnull(x) else None) <= min_date_timestamp) & 
-                (min_date_timestamp <= df_filtered_guia['CTH_DTHR_FIN'].apply(lambda x: x.timestamp() if pd.notnull(x) else None))
-            ]
-           
-            df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
 
-            df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
+            if len(df_filtered_guia) == 1:
+                df_filtered2 = df_filtered_guia
+            else:   
+                df_filtered_guia = df_filtered_guia.loc[
+                    (df_filtered_guia['CTH_DTHR_INI'] <= min_date2) &
+                    (min_date2 <= df_filtered_guia['CTH_DTHR_FIN'])
+                ]
+
+            
+            df_filtered2 = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
+            df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
             df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
             df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
             df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
-            df_filtered2 = df_filtered2.rename(columns={'GUIA_ATENDIMENTO':'GUIA', 'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
-            st.dataframe(df_filtered2)
+            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
+       
+            # st.dataframe(df_filtered2)
+            
+            # Merge para encontrar apenas as linhas em comum com 'GUIA_ATENDIMENTO'
+            result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
+            
+            
+            result.drop_duplicates(subset=['Guia'], keep='first', inplace=True)
+
+            st.dataframe(result)
 
             output2 = BytesIO()
             df_filtered2.to_excel(output2, index=False)
@@ -108,8 +153,8 @@ def main_page():
         st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
 
 def page_tratamento():
-    st.image("LOGO.png", width=50)
-    st.header('Filtragem de dados sobre Internação')
+    st.image("LOGO.png", width=150)
+    st.header('Filtragem de dados sobre Tratamento')
 
     uploaded_file = st.file_uploader("Escolha o arquivo 'Demonstrativo' em formato xls")
 
@@ -168,10 +213,10 @@ def page_tratamento():
 
         df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
         df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-        df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
+        df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
         df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
-        df_filtered2 = df_filtered2.rename(columns={'GUIA_ATENDIMENTO':'GUIA', 'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
-
+        df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
+        
         st.dataframe(df_filtered2)
         output2 = BytesIO()
         df_filtered2.to_excel(output2, index=False)                   
