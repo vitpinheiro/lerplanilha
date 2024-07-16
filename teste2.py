@@ -139,7 +139,7 @@ def main_page():
             st.dataframe(result)
 
             output2 = BytesIO()
-            df_filtered2.to_excel(output2, index=False)
+            result.to_excel(output2, index=False)
             output2.seek(0)
             st.download_button(
                 label="Baixar arquivo Excel",
@@ -211,22 +211,31 @@ def page_tratamento():
         else:
             df_filtered_guia = df.copy()
 
+    if 'guide_values_to_use' in locals() and 'df_filtered_guia' in locals() and 'df_filtered' in locals():
+
+      
+
         df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
         df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
         df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
         df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
         df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
-        
-        st.dataframe(df_filtered2)
+        result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
+            
+            
+        result.drop_duplicates(subset=['Guia'], keep='first', inplace=True)
+
+        st.dataframe(result)
+       
         output2 = BytesIO()
-        df_filtered2.to_excel(output2, index=False)                   
+        result.to_excel(output2, index=False)                   
         output2.seek(0)
         st.download_button(
             label="Baixar arquivo Excel",
             data=output2,
             file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        ) 
     else:
         st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v3.xls.")
 
