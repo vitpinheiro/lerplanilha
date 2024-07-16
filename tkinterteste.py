@@ -35,22 +35,22 @@ class App(customtkinter.CTk):
         self.leitor_arquivos = customtkinter.CTkLabel(self, text="Escolha o arquivo 'Demonstrativo' em formato xls", font=("Arial", 14))
         self.leitor_arquivos.pack(pady=10)
 
-        column_names = ['Guia', 'Dt item']
-        guide_values = []
+        # column_names = ['Guia', 'Dt item']
+        # guide_values = []
         
-        if self.leitor_arquivos is not None:
-            self.checkbox_guia = tk.Checkbutton(self.root, text="Filtro Guia", variable=tk.BooleanVar(value=False))
-            self.checkbox_guia.pack()
-            if self.checkbox_guia:
-                guide_values = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
+        # if self.leitor_arquivos is not None:
+        #     self.checkbox_guia = tk.Checkbutton(self.root, text="Filtro Guia", variable=tk.BooleanVar(value=False))
+        #     self.checkbox_guia.pack()
+        #     if self.checkbox_guia:
+        #         guide_values = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
 
-            data = st.checkbox("Filtro Data", value=True)
-            date_range = None
-            if data:
-                date_range = st.date_input(
-                    "Selecione o intervalo de datas",
-                    value=(datetime(2024, 1, 1).date(), datetime(2024, 12, 31).date())
-                )
+            # data = st.checkbox("Filtro Data", value=True)
+            # date_range = None
+            # if data:
+            #     date_range = st.date_input(
+            #         "Selecione o intervalo de datas",
+            #         value=(datetime(2024, 1, 1).date(), datetime(2024, 12, 31).date())
+            #     )
 
 
         self.upload_button = customtkinter.CTkButton(self, text="Carregar Arquivo", command=self.carregar_arquivo)

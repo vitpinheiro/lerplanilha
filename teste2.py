@@ -148,7 +148,11 @@ def main_page():
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
-            st.write("Por favor, primeiro aplique os filtros no arquivo XLS/XLSX.")
+            st.markdown(
+            "<h3 style='color: red; font-weight: bold;'>Por favor, primeiro clique em aplicar filtro</h3>",
+            unsafe_allow_html=True
+            )
+            
     else:
         st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
 
@@ -211,31 +215,36 @@ def page_tratamento():
         else:
             df_filtered_guia = df.copy()
 
-    if 'guide_values_to_use' in locals() and 'df_filtered_guia' in locals() and 'df_filtered' in locals():
+        if 'guide_values_to_use' in locals() and 'df_filtered_guia' in locals() and 'df_filtered' in locals():
 
-      
+        
 
-        df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
-        df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
-        df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
-        df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
-        df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
-        result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
-            
-            
-        result.drop_duplicates(subset=['Guia'], keep='first', inplace=True)
+            df_filtered_guia = df_filtered_guia[df_filtered_guia['CTH_NUM'] == 0]
+            df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
+            df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
+            df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
+            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
+            result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
+                
+                
+            result.drop_duplicates(subset=['Guia'], keep='first', inplace=True)
 
-        st.dataframe(result)
-       
-        output2 = BytesIO()
-        result.to_excel(output2, index=False)                   
-        output2.seek(0)
-        st.download_button(
-            label="Baixar arquivo Excel",
-            data=output2,
-            file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ) 
+            st.dataframe(result)
+        
+            output2 = BytesIO()
+            result.to_excel(output2, index=False)                   
+            output2.seek(0)
+            st.download_button(
+                label="Baixar arquivo Excel",
+                data=output2,
+                file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ) 
+        else:
+            st.markdown(
+            "<h3 style='color: red; font-weight: bold;'>Por favor, primeiro clique em aplicar filtro</h3>",
+            unsafe_allow_html=True
+            )
     else:
         st.write("Por favor, faça o upload do arquivo ATENDIMENTOS v3.xls.")
 
