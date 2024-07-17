@@ -50,7 +50,7 @@ def main_page():
                 value=(datetime(2024, 1, 1).date(), datetime(2024, 12, 31).date())
             )
 
-        if st.button('Aplicar Filtros'):
+        # if st.button('Aplicar Filtros'):
             guide_values_to_use = guide_values if guia else None
             date_range_to_use = date_range if data else None
 
@@ -58,7 +58,7 @@ def main_page():
             if df_filtered is not None:
              
                 if df_filtered.empty:
-                    st.markdown("<h3 style='color: red;'>Linha não encontrada</h3>", unsafe_allow_html=True)
+                    st.markdown("<h3 style='color: red;'>Digite um valor de guia válido</h3>", unsafe_allow_html=True)
                 else:
                     st.write('Tabela filtrada pelos valores selecionados:')
                     st.dataframe(df_filtered[['Guia', 'Dt item']])
@@ -147,11 +147,11 @@ def main_page():
                 file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-        else:
-            st.markdown(
-            "<h3 style='color: red; font-weight: bold;'>Por favor, primeiro clique em aplicar filtro</h3>",
-            unsafe_allow_html=True
-            )
+        # else:
+        #     st.markdown(
+        #     "<h3 style='color: red; font-weight: bold;'>Por favor, primeiro clique em aplicar filtro</h3>",
+        #     unsafe_allow_html=True
+        #     )
             
     else:
         st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
@@ -166,6 +166,7 @@ def page_tratamento():
     guide_values = []
 
     if uploaded_file is not None:
+        
         guia = st.checkbox("Filtro Guia", value=False)
         if guia:
             guide_values = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
@@ -178,7 +179,7 @@ def page_tratamento():
                 value=(pd.to_datetime('2024-01-01').date(), pd.to_datetime('2024-12-31').date())
             )
 
-        if st.button('Aplicar Filtros'):
+        # if st.button('Aplicar Filtros'):
             guide_values_to_use = guide_values if guia else None
             date_range_to_use = date_range if data else None
 
