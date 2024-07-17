@@ -94,7 +94,7 @@ def main_page():
         df['GIH_NUMERO'] = df['GIH_NUMERO'].astype(str).str.replace('.', '')
 
         if guide_values:
-            df_filtered_guia = df[df['GUIA_ATENDIMENTO'].isin(guide_values) | df['GUIA_CONTA'].isin(guide_values)]
+            df_filtered_guia =df['GUIA_ATENDIMENTO'].isin(guide_values) 
 
         else:
             df_filtered_guia = df.copy()
