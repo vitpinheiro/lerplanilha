@@ -149,21 +149,24 @@ def main_page():
 
 
 
-            # Se o DataFrame filtrado contém apenas uma linha
-            if len(df_filtrado_guia) == 1:
-                # Nesse caso, não é necessário aplicar mais filtros.
-                # Apenas atribui o DataFrame original à nova variável df_filtrado2.
-                df_filtrado2 = df_filtrado_guia
-            # caso contrário, aplica um filtro adicional com base na data mínima
-            # Onde inclui apenas as linhas onde a data mínima está dentro do intervalo definido pelas colunas 'CTH_DTHR_INI' e 'CTH_DTHR_FIN'
-            else:   
-                df_filtrado_guia = df_filtrado_guia.loc[
-                    (df_filtrado_guia['CTH_DTHR_INI'] <= min_date) &
-                    (min_date <= df_filtrado_guia['CTH_DTHR_FIN'])
-                ]
+            # # Se o DataFrame filtrado contém apenas uma linha
+            # if len(df_filtrado_guia) == 1:
+            #     # Nesse caso, não é necessário aplicar mais filtros.
+            #     # Apenas atribui o DataFrame original à nova variável df_filtrado2.
+            #     df_filtrado2 = df_filtrado_guia
+            # # caso contrário, aplica um filtro adicional com base na data mínima
+            # # Onde inclui apenas as linhas onde a data mínima está dentro do intervalo definido pelas colunas 'CTH_DTHR_INI' e 'CTH_DTHR_FIN'
+            # else:   
+            #     df_filtrado_guia = df_filtrado_guia.loc[
+            #         (df_filtrado_guia['CTH_DTHR_INI'] <= min_date) &
+            #         (min_date <= df_filtrado_guia['CTH_DTHR_FIN'])
+            #     ]
+
+            
 
             # pega as linhas apenas onde GUIA_ATENDIMENTO FOR IGUAL A GIH_NUMERO
             df_filtrado2 = df_filtrado_guia[df_filtrado_guia['GUIA_ATENDIMENTO'] == df_filtrado_guia['GIH_NUMERO']]
+            df_filtrado2 = df_filtrado2[df_filtrado2['CTH_NUM'] != 0]
             # as colunas que serão exibidas
             df_filtrado2 = df_filtrado2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
             # conversão para string
