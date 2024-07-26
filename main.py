@@ -196,10 +196,10 @@ def page_internacao():
 
             # Cria um botão de download, responsável por baixar o arquivo "result" em formato excel
             st.download_button(
-                label="Baixar arquivo Excel",
-                data=output2,
-                file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                label = "Baixar arquivo Excel",
+                data = output2,
+                file_name = f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             
     else:
