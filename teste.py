@@ -74,41 +74,41 @@ def page_internacao():
                 value=(datetime(2024, 1, 1).date(), datetime(2024, 12, 31).date())
             )
 
+        if st.button("Aplicar Filtros"):
+            # Associa à variável "guide_values_to_use" o valor de "guide_values" se o filtro de guia estiver ativo, caso contrário será vazio
+            guide_values_to_use = guide_values if guia else None
 
-        # Associa à variável "guide_values_to_use" o valor de "guide_values" se o filtro de guia estiver ativo, caso contrário será vazio
-        guide_values_to_use = guide_values if guia else None
+            # Associa à variável "date_range_to_use" o valor de "date_range" se o filtro de data estiver ativo, caso contrário será vazio
+            date_range_to_use = date_range if data else None
 
-        # Associa à variável "date_range_to_use" o valor de "date_range" se o filtro de data estiver ativo, caso contrário será vazio
-        date_range_to_use = date_range if data else None
+            # Modifica a variável "df_filtered" para receber o valor de uma planilha lida sob os parâmetros fornecidos
+            df_filtered = read_and_filter_xls(uploaded_file, column_names, guide_values_to_use, date_range_to_use)
 
-        # Modifica a variável "df_filtered" para receber o valor de uma planilha lida sob os parâmetros fornecidos
-        df_filtered = read_and_filter_xls(uploaded_file, column_names, guide_values_to_use, date_range_to_use)
-
-        # Condicional que verifica se a variável "df_filtered" é nula
-        if df_filtered is not None:
-            
-            # Verifica se a variável está vazia
-            if df_filtered.empty:
-                # Caso a variável esteja vazia, cria um elemento escrito na tela com as condições fornecidas
-                st.markdown("<h3 style='color: red;'>Digite um valor de guia válido</h3>", unsafe_allow_html=True)
-            else:
-                # Cria um elemento escrito na tela precedente ao display da tabela
-                st.write('Tabela filtrada pelos valores selecionados:')
-                # Cria graficamente a tabela cujas colunas são fonecidas entre os colchetes
-                st.dataframe(df_filtered[['Guia', 'Dt item']])
-            
-                # Resgata a menor data dentre os valores passados pelas filtragens
-                min_date = df_filtered['Dt item'].min()
-
-                # Converte o valor da variável "min_date" para datetime na formatação fornecida
-                min_date = pd.to_datetime(min_date, format= "%Y-%m-%d")
+            # Condicional que verifica se a variável "df_filtered" é nula
+            if df_filtered is not None:
                 
-                # Cria um elemento escrito na tela que fornece o valor da variável "min_date"
-                st.write(f"A menor data encontrada é: {min_date}")
-      
-    else:
-        # Caso as condicionais não sejam atendidas, cria um elemento na tela que escreve o texto entre parênteses
-        st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
+                # Verifica se a variável está vazia
+                if df_filtered.empty:
+                    # Caso a variável esteja vazia, cria um elemento escrito na tela com as condições fornecidas
+                    st.markdown("<h3 style='color: red;'>Digite um valor de guia válido</h3>", unsafe_allow_html=True)
+                else:
+                    # Cria um elemento escrito na tela precedente ao display da tabela
+                    st.write('Tabela filtrada pelos valores selecionados:')
+                    # Cria graficamente a tabela cujas colunas são fonecidas entre os colchetes
+                    st.dataframe(df_filtered[['Guia', 'Dt item']])
+                
+                    # Resgata a menor data dentre os valores passados pelas filtragens
+                    min_date = df_filtered['Dt item'].min()
+
+                    # Converte o valor da variável "min_date" para datetime na formatação fornecida
+                    min_date = pd.to_datetime(min_date, format= "%Y-%m-%d")
+                    
+                    # Cria um elemento escrito na tela que fornece o valor da variável "min_date"
+                    st.write(f"A menor data encontrada é: {min_date}")
+            
+        else:
+            # Caso as condicionais não sejam atendidas, cria um elemento na tela que escreve o texto entre parênteses
+            st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
 
     # Cria um elemento de título com o texto entre as aspas
     st.header('Upload e Filtragem do Arquivo ATENDIMENTOS')
@@ -121,6 +121,14 @@ def page_internacao():
 
         # Cria um dataframe a partir da leitura do arquivo recuperado pela variável "uploaded_file2"
         df = pd.read_excel(uploaded_file2)
+
+        # pega o indice original da planilha
+        df['Índice Original'] = df.index
+        df_filtrado_guia = df[
+                df['GUIA_ATENDIMENTO'].isin(df.index) |
+                df['GUIA_CONTA'].isin(df.index) |
+                df['GIH_NUMERO'].isin(df.index)
+            ]
 
         # Astype(str) - Transforma os dados de cada linha do dataframe em tipo string
         # Str.replace('.', '') - Método referente aos elementos do tipo 'string' que modifica
@@ -140,9 +148,33 @@ def page_internacao():
 
         # Verifica se a variável "df_filtered" está contida nos elementos locais (contrário de elementos globais) e se é um dataframe não nulo
         if 'df_filtered'in locals() and not df_filtered.empty:
+            
+            # Variável que armazena o menor valor dentre os elementos fornecidos
+            min_date = df_filtered['Dt item'].min()
+
+            # # Variável que armazena a transformação e a formatação da variável acima no tipo datetime
+            # min_date2 = pd.to_datetime(min_date, format="%Y-%m-%d %H:%M:%S")
+        
+            # # Transforma os dados das colunas especificadas entre as chaves no tipo "datetime"
+            # df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
+            # df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
+
+            # # Verifica se o número de elementos contido na variável é igual a 1
+            # if len(df_filtered_guia) == 1:
+            #     # Cria uma nova variável que recebe o valor da variável especificada
+            #     df_filtered2 = df_filtered_guia
+            # else:
+            #     # Cria uma variável cujo resultado é a filtragem de dados por intervalo de tempo
+            #     df_filtered_guia = df_filtered_guia.loc[
+            #         (df_filtered_guia['CTH_DTHR_INI'] <= min_date2) &
+            #         (min_date2 <= df_filtered_guia['CTH_DTHR_FIN'])
+            #     ]
 
             # Atribui à variável o dataframe que obedecem às condições fornecidas
             df_filtered2 = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
+
+            # Filtra o dataframe pelos valores da coluna "CTH_NUM" sejam diferentes de 0
+            df_filtered2 = df_filtered2[df_filtered2["CTH_NUM"] != 0]
 
             # Atribui à variável apenas os dados das colunas especificadas
             df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
@@ -179,7 +211,8 @@ def page_internacao():
                 data = output2,
                 file_name = f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
                 mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )      
+            )
+            
     else:
         # Escreve na tela a mensagem especificada entre aspas 
         st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
@@ -303,6 +336,12 @@ def page_tratamento():
             
             # Torna os valores referentes à coluna selecionada em tipo "string"
             df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
+
+            # Torna os valores referentes à coluna selecionada em tipo "string"
+            df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
+
+            # Torna os valores referentes à coluna selecionada em tipo "string"
+            df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
 
             # Modifica o nome das colunas do dataframe para o nome disposto depois dos ":"
             df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
