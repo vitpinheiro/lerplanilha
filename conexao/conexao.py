@@ -16,7 +16,7 @@ try:
 
  
     cursor = connection.cursor()
-    query = "SELECT top 100 pac_reg , pac_nome FROM  pac"
+    query = query
     cursor.execute(query)
 
 
