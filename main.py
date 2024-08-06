@@ -15,7 +15,7 @@ from datetime import datetime
 def read_and_filter_xls(file, column_names, guide_values, date_range):
 
     # Criação do dataframe (espécie de tabela) a partir do arquivo fornecido
-    df = pd.read_excel(file)
+    df = pd.read_excel(file, engine='xlrd')
 
     # Verifica se a coluna "Guia" encontra-se entre o nome das colunas do dataframe e houver valores de guia
     if 'Guia' in column_names and guide_values:
