@@ -53,7 +53,7 @@ def consulta():
     WHERE
     CTH.CTH_CNV_COD = CNV_COD AND
     HSP.HSP_PAC = pac.pac_reg AND
-    HSP.HSP_DTHRE BETWEEN GETDATE() - 365 AND GETDATE() AND
+    HSP.HSP_DTHRE BETWEEN GETDATE() - 720 AND GETDATE() AND
     CNV.CNV_COD = '2' 
 
 
@@ -94,7 +94,7 @@ def consulta():
     HSP.HSP_CNV = CNV_COD AND
     HSP.HSP_PAC = pac.pac_reg AND
     HSP.HSP_TRAT_INT = 'T' AND
-    HSP.HSP_DTHRE BETWEEN GETDATE() - 365 AND GETDATE() AND
+    HSP.HSP_DTHRE BETWEEN GETDATE() - 720 AND GETDATE() AND
     CNV.CNV_COD = '2' 
     order by
     HSP_PAC,
@@ -107,9 +107,6 @@ def consulta():
 
         # Lendo a consulta diretamente para um DataFrame
         df = pd.read_sql(query, connection)
-
-        # Exibindo o DataFrame
-        print(df)
 
         pasta = os.path.join(os.environ['USERPROFILE'], 'Downloads')
         nome_arquivo = f'Atendimentos_{agora}.xlsx'

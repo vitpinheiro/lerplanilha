@@ -262,7 +262,6 @@ missing module named defusedxml - imported by PIL.Image (optional), openpyxl.xml
 missing module named 'defusedxml.ElementTree' - imported by openpyxl.xml.functions (conditional)
 missing module named htmlentitydefs - imported by lxml.html.soupparser (optional)
 missing module named BeautifulSoup - imported by lxml.html.soupparser (optional)
-missing module named chardet - imported by bs4.dammit (optional)
 missing module named cchardet - imported by bs4.dammit (optional)
 missing module named bs4.builder.HTMLParserTreeBuilder - imported by bs4.builder (top-level), bs4 (top-level)
 missing module named 'html5lib.treebuilders' - imported by bs4.builder._html5lib (optional), lxml.html._html5builder (top-level), lxml.html.html5parser (top-level)
