@@ -15,35 +15,7 @@ from datetime import datetime
 def read_and_filter_xls(file, column_names, guide_values, date_range):
 
     # Criação do dataframe (espécie de tabela) a partir do arquivo fornecido
-    df = pd.read_excel(file, engine='xlrd')
-
-    # Criar um objeto BytesIO para armazenar o arquivo .xlsx em memória
-    output = BytesIO()
-
-    # Salvar o DataFrame como um arquivo .xlsx no objeto BytesIO
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Sheet1')
-    
-    # Mover o ponteiro do objeto BytesIO para o início
-    output.seek(0)
-
-    # Modifica a variável df para que seja um arquivo .xlsx
-    df = pd.read_excel(output)
-
-    # Conversão dos dados da coluna "Guia" para numérico (para poder fazer a filtragem dos dados que não forem numéricos, já que estavam vindo algumas coisas escritas)
-    df['Guia'] = pd.to_numeric(df['Guia'], errors='coerce')
-
-    # Exclusão dos dados "NaN" ou "Not-A-Number"
-    df = df.dropna(subset=['Guia'])
-
-    # Reinicia os índices do dataframe
-    df.reset_index(drop=True, inplace=True)
-
-    # Converte novamente os dados de "Guia" para string
-    df["Guia"] = df['Guia'].astype(str)
-
-    # Remove o ".0" do final dos dados
-    df['Guia'] = df['Guia'].map(lambda x: x.rstrip('.0'))
+    df = pd.read_excel(file)
 
     # Verifica se a coluna "Guia" encontra-se entre o nome das colunas do dataframe e houver valores de guia
     if 'Guia' in column_names and guide_values:
@@ -81,32 +53,33 @@ def page_internacao():
     if uploaded_file is not None:
 
         # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
-        check_guia = st.checkbox("Filtro Guia", value = False)
+        guia = st.checkbox("Filtro Guia", value = False)
 
         # Verifica o estado da variável "guia"
-        if check_guia:
+        if guia:
             # Recupera o valor das guias inseridas em um text input e os separa por vírgulas em uma variável
             guide_values = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
 
         # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
-        check_data = st.checkbox("Filtro Data", value = True)
+        data = st.checkbox("Filtro Data", value = True)
 
         # Cria uma variável e associa a ela o valor "None"
         date_range = None
 
         # Verifica o estado da variável "data"
-        if check_data:
+        if data:
             # Recupera o intervalo de data selecionado em um input em formato de calendário e o armazena em uma variável
             date_range = st.date_input(
                 "Selecione o intervalo de datas",
                 value=(datetime(2024, 1, 1).date(), datetime(2024, 12, 31).date())
             )
 
+
         # Associa à variável "guide_values_to_use" o valor de "guide_values" se o filtro de guia estiver ativo, caso contrário será vazio
-        guide_values_to_use = guide_values if check_guia else None
+        guide_values_to_use = guide_values if guia else None
 
         # Associa à variável "date_range_to_use" o valor de "date_range" se o filtro de data estiver ativo, caso contrário será vazio
-        date_range_to_use = date_range if check_data else None
+        date_range_to_use = date_range if data else None
 
         # Modifica a variável "df_filtered" para receber o valor de uma planilha lida sob os parâmetros fornecidos
         df_filtered = read_and_filter_xls(uploaded_file, column_names, guide_values_to_use, date_range_to_use)
@@ -123,6 +96,15 @@ def page_internacao():
                 st.write('Tabela filtrada pelos valores selecionados:')
                 # Cria graficamente a tabela cujas colunas são fonecidas entre os colchetes
                 st.dataframe(df_filtered[['Guia', 'Dt item']])
+            
+                # Resgata a menor data dentre os valores passados pelas filtragens
+                min_date = df_filtered['Dt item'].min()
+
+                # Converte o valor da variável "min_date" para datetime na formatação fornecida
+                min_date = pd.to_datetime(min_date, format= "%Y-%m-%d")
+                
+                # Cria um elemento escrito na tela que fornece o valor da variável "min_date"
+                st.write(f"A menor data encontrada é: {min_date}")
       
     else:
         # Caso as condicionais não sejam atendidas, cria um elemento na tela que escreve o texto entre parênteses
@@ -158,22 +140,41 @@ def page_internacao():
 
         # Verifica se a variável "df_filtered" está contida nos elementos locais (contrário de elementos globais) e se é um dataframe não nulo
         if 'df_filtered'in locals() and not df_filtered.empty:
+            
+            # Variável que armazena o menor valor dentre os elementos fornecidos
+            min_date = df_filtered['Dt item'].min()
 
-            # Atribui à variável o dataframe que cujos valores obedecem às condições fornecidas
+            # Variável que armazena a transformação e a formatação da variável acima no tipo datetime
+            min_date2 = pd.to_datetime(min_date, format="%Y-%m-%d %H:%M:%S")
+        
+            # Transforma os dados das colunas especificadas entre as chaves no tipo "datetime"
+            df_filtered_guia['CTH_DTHR_INI'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_INI'], errors='coerce')
+            df_filtered_guia['CTH_DTHR_FIN'] = pd.to_datetime(df_filtered_guia['CTH_DTHR_FIN'], errors='coerce')
+
+            # Verifica se o número de elementos contido na variável é igual a 1
+            if len(df_filtered_guia) == 1:
+                # Cria uma nova variável que recebe o valor da variável especificada
+                df_filtered2 = df_filtered_guia
+            else:
+                # Cria uma variável cujo resultado é a filtragem de dados por intervalo de tempo
+                df_filtered_guia = df_filtered_guia.loc[
+                    (df_filtered_guia['CTH_DTHR_INI'] <= min_date2) &
+                    (min_date2 <= df_filtered_guia['CTH_DTHR_FIN'])
+                ]
+
+            # Atribui à variável o dataframe que obedecem às condições fornecidas
             df_filtered2 = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
 
-            # Filtra os valores da coluna "CTH_NUM" que sejam diferentes de 0
-            df_filtered2 = df_filtered2[df_filtered2['CTH_NUM'] != 0]
-
             # Atribui à variável apenas os dados das colunas especificadas
-            df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
+            df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
             
             # Torna os elementos das colunas especificadas em tipo "string"
+            df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
             df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
             df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
 
             # Renomeia as colunas do dataframe para os nomes dispostos para depois dos ":"
-            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
+            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
             
             # Merge para encontrar apenas as linhas em comum com 'GUIA_ATENDIMENTO'
             result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
@@ -226,21 +227,21 @@ def page_tratamento():
     if uploaded_file is not None:
         
         # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
-        check_guia = st.checkbox("Filtro Guia", value=False)
+        guia = st.checkbox("Filtro Guia", value=False)
 
         # Verifica o estado da variável "guia"
-        if check_guia:
+        if guia:
             # Recupera o valor das guias inseridas em um text input e os separa por vírgulas em uma variável
             guide_values = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
 
         # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
-        check_data = st.checkbox("Filtro Data", value=True)
+        data = st.checkbox("Filtro Data", value=True)
 
         # Cria uma variável e associa a ela o valor "None"
         date_range = None
 
         # Verifica o estado da variável "data"
-        if check_data:
+        if data:
             # Recupera o intervalo de data selecionado em um input em formato de calendário e o armazena em uma variável
             date_range = st.date_input(
                 "Selecione o intervalo de datas",
@@ -248,10 +249,10 @@ def page_tratamento():
             )
 
         # Associa à variável "guide_values_to_use" o valor de "guide_values" se o filtro de guia estiver ativo, caso contrário será vazio
-        guide_values_to_use = guide_values if check_guia else None
+        guide_values_to_use = guide_values if guia else None
 
         # Associa à variável "date_range_to_use" o valor de "date_range" se o filtro de data estiver ativo, caso contrário será vazio
-        date_range_to_use = date_range if check_data else None
+        date_range_to_use = date_range if data else None
 
         # Modifica a variável "df_filtered" para receber o valor de uma planilha lida sob os parâmetros fornecidos
         df_filtered = read_and_filter_xls(uploaded_file, column_names, guide_values_to_use, date_range_to_use)
@@ -263,7 +264,24 @@ def page_tratamento():
 
             # Elemento que exibe o dataframe na tela considerando as colunas especificadas
             st.dataframe(df_filtered[['Guia', 'Dt item']])
+            
+            # Cria uma variável que armazena o valor da menor data presente dentre os elementos da coluna específicada
+            min_date = df_filtered['Dt item'].min()
 
+            # Cria uma variável que representa um dataframe filtrado pela menor data fornecida acima 
+            df_filtered_by_min_date = df_filtered[df_filtered['Dt item'] == min_date][['Guia', 'Dt item']]
+
+            # Elemento que escreve na tela o texto especificado entre aspas
+            st.write('Tabela filtrada pela menor data:')
+
+            # # Elemento que exibe o dataframe na tela
+            st.dataframe(df_filtered_by_min_date)
+
+        # Elemento que escreve na tela o texto especificado entre aspas
+        st.write(f'Nome do arquivo: {uploaded_file.name}')
+
+        # Elemento que escreve na tela o texto especificado entre aspas
+        st.write(f'Tamanho do arquivo: {uploaded_file.size} bytes')
     else:
         # Elemento que escreve na tela o texto especificado entre aspas
         st.write("Por favor, faça o upload de um arquivo XLS/XLSX.")
@@ -303,13 +321,13 @@ def page_tratamento():
             df_filtered_guia = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
 
             # Cria um dataframe com os elementos referentes apenas às colunas especificadas
-            df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM']]
+            df_filtered2 = df_filtered_guia[['GUIA_ATENDIMENTO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'NFS_SERIE', 'NFS_NUMERO']]
             
-            # # Torna os valores referentes à coluna selecionada em tipo "string"
-            # df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
+            # Torna os valores referentes à coluna selecionada em tipo "string"
+            df_filtered2['NFS_NUMERO'] = df_filtered2['NFS_NUMERO'].astype(str)
 
             # Modifica o nome das colunas do dataframe para o nome disposto depois dos ":"
-            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM'})
+            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'NFS_SERIE':'FAT.S', 'NFS_NUMERO':'FAT.NUM'})
             
             # Merge para encontrar apenas as linhas em comum com 'GUIA_ATENDIMENTO'
             result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
