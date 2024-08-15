@@ -122,6 +122,9 @@ def page_internacao():
                 st.write('Tabela filtrada pelos valores selecionados:')
                 # Cria graficamente a tabela cujas colunas são fonecidas entre os colchetes
                 st.dataframe(df_filtered[['Guia', 'Dt item']])
+                 # Seleciona a menor data ('Dt item') para cada 'Guia'
+                df_min_date = df_filtered.groupby('Guia').agg({'Dt item': 'min'}).reset_index()
+                st.dataframe(df_min_date)
          
       
     else:
@@ -156,54 +159,72 @@ def page_internacao():
             # Cria a mesma variável, mas copiando o dataframe antiga
             df_filtered_guia = df.copy()
 
-        # Verifica se a variável "df_filtered" está contida nos elementos locais (contrário de elementos globais) e se é um dataframe não nulo
-        if 'df_filtered'in locals() and not df_filtered.empty:
+            # Verifica se a variável "df_filtered" está contida nos elementos locais e se não está vazia
+        if 'df_filtered' in locals() and not df_filtered.empty:
 
-            # Atribui à variável o dataframe que cujos valores obedecem às condições fornecidas
-            df_filtered2 = df_filtered_guia[df_filtered_guia['GUIA_ATENDIMENTO'] == df_filtered_guia['GIH_NUMERO']]
+            # Verifica se a coluna 'CTH_NUM' existe no DataFrame
+            if 'CTH_NUM' in df_filtered_guia.columns:
+                
+                # Filtra os valores da coluna 'CTH_NUM' que sejam diferentes de 0
+                df_filtered2 = df_filtered_guia[df_filtered_guia['CTH_NUM'] != 0]
 
-            # Filtra os valores da coluna "CTH_NUM" que sejam diferentes de 0
-            df_filtered2 = df_filtered2[df_filtered2['CTH_NUM'] != 0]
+                # Seleciona as colunas de interesse
+                df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO', 'GIH_NUMERO', 'GUIA_CONTA', 'HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
 
-            # Atribui à variável apenas os dados das colunas especificadas
-            df_filtered2 = df_filtered2[['GUIA_ATENDIMENTO','GUIA_CONTA','HSP_NUM', 'HSP_PAC', 'CTH_NUM', 'FAT_SERIE', 'FAT_NUM', 'CTH_DTHR_INI', 'CTH_DTHR_FIN']]
-            
-            # Torna os elementos das colunas especificadas em tipo "string"
-            df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
-            df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
+                # Converte as colunas para strings
+                df_filtered2['HSP_PAC'] = df_filtered2['HSP_PAC'].astype(str)
+                df_filtered2['FAT_NUM'] = df_filtered2['FAT_NUM'].astype(str)
 
-            # Renomeia as colunas do dataframe para os nomes dispostos para depois dos ":"
-            df_filtered2 = df_filtered2.rename(columns={'HSP_NUM':'IH', 'HSP_PAC':'REGISTRO', 'CTH_NUM':'CONTA', 'FAT_SERIE':'PRE.S', 'FAT_NUM':'PRE.NUM', 'CTH_DTHR_INI':'DATA_INICIO', 'CTH_DTHR_FIN':'DATA_FIM'})
-            
-            # Merge para encontrar apenas as linhas em comum com 'GUIA_ATENDIMENTO'
-            result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
+                # Renomeia as colunas do DataFrame para os nomes especificados
+                df_filtered2 = df_filtered2.rename(columns={
+                    'HSP_NUM': 'IH', 
+                    'HSP_PAC': 'REGISTRO', 
+                    'CTH_NUM': 'CONTA', 
+                    'FAT_SERIE': 'PRE.S', 
+                    'FAT_NUM': 'PRE.NUM', 
+                    'CTH_DTHR_INI': 'DATA_INICIO', 
+                    'CTH_DTHR_FIN': 'DATA_FIM'
+                })
 
-            # Remove os elementos duplicados da variável            
-            result.drop_duplicates(subset=['Guia'], keep='first', inplace=True)
+                
+                # Merge para encontrar apenas as linhas em comum com 'GUIA_ATENDIMENTO'
+                result = pd.merge(df_filtered[['Guia', 'Dt item']], df_filtered2, left_on='Guia', right_on='GUIA_ATENDIMENTO', how='inner')
 
-            # Mostra na tela o dataframe resultado de todos os processos e filtragens
-            st.dataframe(result)
+                result = result.drop_duplicates(subset=['Guia', 'Dt item'])
 
-            # Cria um "buffer de memória" que pode ser utilizado para leitura de dados de dados binários
-            output2 = BytesIO()
 
-            # Transforma o dataframe resultado em formato excel, desconsiderando os índices
-            result.to_excel(output2, index=False)
+                # Filtra as linhas onde 'Dt item' esteja entre 'CTH_DTHR_INI' e 'CTH_DTHR_FIN'
+                result = result[
+                    (result['Dt item'] >= result['DATA_INICIO']) & 
+                    (result['Dt item'] <= result['DATA_FIM'])
+                ]
 
-            # Esse método movimenta o cursor para o início do buffer, garantindo que a leitura comece deste ponto
-            output2.seek(0)
+                # Mostra na tela o DataFrame resultante de todos os processos e filtragens
+                st.dataframe(result)
 
-            # Cria um botão de download, responsável por baixar o arquivo "result" em formato excel
-            st.download_button(
-                label = "Baixar arquivo Excel",
-                data = output2,
-                file_name = f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            
-    else:
-        # Escreve na tela a mensagem especificada entre aspas 
-        st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
+                # Cria um buffer de memória para salvar o arquivo Excel
+                output2 = BytesIO()
+
+                # Salva o DataFrame resultante em formato Excel, desconsiderando os índices
+                result.to_excel(output2, index=False)
+
+                # Movimenta o cursor para o início do buffer
+                output2.seek(0)
+
+                # Cria um botão de download para baixar o arquivo Excel
+                st.download_button(
+                    label="Baixar arquivo Excel",
+                    data=output2,
+                    file_name=f"resultado_atendimentos_filtrado_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            else:
+                # Exibe uma mensagem de erro se a coluna 'CTH_NUM' não for encontrada
+                st.error("A coluna 'CTH_NUM' não foi encontrada no arquivo de atendimentos.")
+        else:
+            # Escreve na tela a mensagem especificada
+            st.write("Por favor, faça o upload do arquivo 'Atendimentos'!")
 
 # Função responsável por gerenciar a página "Tratamento" da aplicação
 def page_tratamento():
