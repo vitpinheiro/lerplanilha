@@ -39,7 +39,10 @@ def consulta():
     GIH.GIH_DTHR_FIM,
     GIH.GIH_DTHR_VALID,
     FAT.FAT_SERIE,
-    FAT.FAT_NUM
+    FAT.FAT_NUM,
+    NFS.NFS_SERIE,
+    NFS.NFS_NUMERO,
+    NFS.NFS_TIPO
     FROM 
     HSP 
     left join 
@@ -47,13 +50,17 @@ def consulta():
         LEFT JOIN 
     CTH ON CTH.CTH_HSP_NUM = HSP.HSP_NUM AND CTH.CTH_PAC_REG = HSP.HSP_PAC
         LEFT JOIN
-    FAT ON CTH.CTH_FAT_SERIE = FAT.FAT_SERIE AND CTH.CTH_FAT_NUM = FAT.FAT_NUM,
+    FAT ON CTH.CTH_FAT_SERIE = FAT.FAT_SERIE AND CTH.CTH_FAT_NUM = FAT.FAT_NUM
+    inner join nfs on 
+			fat.FAT_NFS_SERIE = nfs.NFS_SERIE and
+			fat.FAT_NFS_NUMERO = nfs.NFS_NUMERO and
+			fat.FAT_NFS_TIPO = nfs.NFS_TIPO,
     CNV,
     PAC
     WHERE
     CTH.CTH_CNV_COD = CNV_COD AND
     HSP.HSP_PAC = pac.pac_reg AND
-    HSP.HSP_DTHRE BETWEEN GETDATE() - 720 AND GETDATE() AND
+    HSP.HSP_DTHRE BETWEEN GETDATE() - 365 AND GETDATE() AND
     CNV.CNV_COD = '2' 
 
 
@@ -79,7 +86,10 @@ def consulta():
     GIH.GIH_DTHR_FIM,
     GIH.GIH_DTHR_VALID,
     FAT.FAT_SERIE,
-    FAT.FAT_NUM
+    FAT.FAT_NUM,
+    NFS.NFS_SERIE,
+    NFS.NFS_NUMERO,
+    NFS.NFS_TIPO
     FROM 
     HSP 
     left join 
@@ -87,14 +97,18 @@ def consulta():
         LEFT JOIN 
     smm ON smm.SMM_HSP_NUM= HSP.HSP_NUM AND smm.SMM_PAC_REG = HSP.HSP_PAC
         LEFT JOIN
-    FAT ON smm.SMM_FAT_SERIE = FAT.FAT_SERIE AND smm.SMM_FAT = FAT.FAT_NUM,
+    FAT ON smm.SMM_FAT_SERIE = FAT.FAT_SERIE AND smm.SMM_FAT = FAT.FAT_NUM
+    inner join nfs on 
+			fat.FAT_NFS_SERIE = nfs.NFS_SERIE and
+			fat.FAT_NFS_NUMERO = nfs.NFS_NUMERO and
+			fat.FAT_NFS_TIPO = nfs.NFS_TIPO,
     CNV,
     PAC
     WHERE
     HSP.HSP_CNV = CNV_COD AND
     HSP.HSP_PAC = pac.pac_reg AND
     HSP.HSP_TRAT_INT = 'T' AND
-    HSP.HSP_DTHRE BETWEEN GETDATE() - 720 AND GETDATE() AND
+    HSP.HSP_DTHRE BETWEEN GETDATE() - 365 AND GETDATE() AND
     CNV.CNV_COD = '2' 
     order by
     HSP_PAC,
