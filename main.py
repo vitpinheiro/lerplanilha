@@ -1,8 +1,3 @@
-# TODO: Está rolando uma divergência entre a quantidade de valores que puxei da consulta isolada
-# e dos valores encontrados aqui (aqui está encontrando mais e alguns diferentes), é necessário
-# analisar as divergências entre os códigos e as possíveis causas dessas variações de forma isolada
-
-
 # Importação das bibliotecas responsáveis, respectivamente, por: tratamento de dados, 
 # criação e manutenção interface gráfica, tratamento de memória e gestão de arquivos e 
 # tratamento de valores de data
@@ -211,13 +206,13 @@ def page_tratamento():
     # Verifica se algum arquivo foi inserido na variável "uploaded_file"
     if arquivo_demonstrativo is not None:
 
-        # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
-        check_guia = st.checkbox("Filtro Guia", value = False)
+        # # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
+        # check_guia = st.checkbox("Filtro Guia", value = False)
 
-        # Verifica o estado da variável "guia"
-        if check_guia:
-            # Recupera o valor das guias inseridas em um text input e os separa por vírgulas em uma variável
-            valores_de_guias = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
+        # # Verifica o estado da variável "guia"
+        # if check_guia:
+        #     # Recupera o valor das guias inseridas em um text input e os separa por vírgulas em uma variável
+        #     valores_de_guias = st.text_input('Digite os valores das guias separados por vírgulas').split(',')
 
         # Cria uma variável associada a um checkbox que recebe valor "False" se a checkbox estiver desmarcada e vice-versa
         check_data = st.checkbox("Filtro Data", value = True)
