@@ -151,13 +151,28 @@ def page_internacao():
 
             merge_df = pd.merge(df_demonstrativo, df_atendimentos, on='GUIA_ATENDIMENTO')
 
-            df_filtrado_periodo = merge_df[(merge_df['DATA_GUIAS'] >= merge_df['CTH_DTHR_INI']) & (merge_df['DATA_GUIAS'] <= merge_df['CTH_DTHR_FIN'])]
+            for index, row in merge_df.iterrows():
+                if row['DATA_GUIAS'] >= row['CTH_DTHR_INI'] and row['DATA_GUIAS'] <= row['CTH_DTHR_FIN']:
+                    merge_df.loc[index, 'SITUAÇÃO'] = 'Encontrado'
+                else:
+                    merge_df.loc[index, 'SITUAÇÃO'] = 'Não encontrado pelo período não corresponder'
 
-            df_internacao = df_filtrado_periodo[df_filtrado_periodo['HSP_TRAT_INT'] == 'I']
+            lista_fat_num_internação = []
 
-            df_internacao = df_internacao.drop_duplicates(subset='FAT_NUM').reset_index()
+            for index, row in merge_df.iterrows():
+                if row['HSP_TRAT_INT'] == 'I':
+                    if row['DATA_GUIAS'] >= row['CTH_DTHR_INI'] and row['DATA_GUIAS'] <= row['CTH_DTHR_FIN']:
+                        if row['FAT_NUM'] not in lista_fat_num_internação:
+                            merge_df.loc[index, 'SITUAÇÃO'] = 'Encontrado'
+                            lista_fat_num_internação.append(row['FAT_NUM'])
+                        else:
+                            merge_df.loc[index, 'SITUAÇÃO'] = 'Removido pelo número da fatura ser repetido'
+                    else:
+                        merge_df.loc[index, 'SITUAÇÃO'] = 'Não encontrado pelo período não corresponder'
+                else:
+                    merge_df.loc[index, 'SITUAÇÃO'] = 'Não encontrado por não ser internação.'
 
-            df_internacao = df_internacao.drop(df_internacao.columns[[0]], axis = 1)
+            df_internacao = merge_df.copy()
 
             df_internacao['FAT_NUM'] = df_internacao['FAT_NUM'].str.rstrip('.0')
 
@@ -294,13 +309,25 @@ def page_tratamento():
 
             merge_df = pd.merge(df_demonstrativo, df_atendimentos, on='GUIA_ATENDIMENTO')
 
-            df_filtrado_periodo = merge_df[(merge_df['DATA_GUIAS'] >= merge_df['CTH_DTHR_INI']) & (merge_df['DATA_GUIAS'] <= merge_df['CTH_DTHR_FIN'])]
+            for index, row in merge_df.iterrows():
+                if row['DATA_GUIAS'] >= row['CTH_DTHR_INI'] and row['DATA_GUIAS'] <= row['CTH_DTHR_FIN']:
+                    merge_df.loc[index, 'SITUAÇÃO'] = 'Encontrado'
+                else:
+                    merge_df.loc[index, 'SITUAÇÃO'] = 'Não encontrado pelo período não corresponder'
 
-            df_tratamento = df_filtrado_periodo[df_filtrado_periodo['HSP_TRAT_INT'] == 'T']
+            for index, row in merge_df.iterrows():
+                if row['HSP_TRAT_INT'] == 'T':
+                    if row['DATA_GUIAS'] >= row['CTH_DTHR_INI'] and row['DATA_GUIAS'] <= row['CTH_DTHR_FIN']:
+                        if row['FAT_NUM'] != 'nan':
+                            merge_df.loc[index, 'SITUAÇÃO'] = 'Encontrado'
+                        else:
+                            merge_df.loc[index, 'SITUAÇÃO'] = 'Removido pelo número da fatura ser nulo'
+                    else:
+                        merge_df.loc[index, 'SITUAÇÃO'] = 'Não encontrado pelo período não corresponder'
+                else:
+                    merge_df.loc[index, 'SITUAÇÃO'] = 'Não encontrado por não ser Tratamento.'
 
-            df_tratamento = df_tratamento[df_tratamento.FAT_NUM != 'nan'].reset_index()
-
-            df_tratamento = df_tratamento.drop(df_tratamento.columns[[0]], axis = 1)
+            df_tratamento = merge_df.copy()
 
             df_tratamento['FAT_NUM'] = df_tratamento['FAT_NUM'].str.rstrip('.0')
 
